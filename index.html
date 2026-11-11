@@ -1,221 +1,213 @@
 <!DOCTYPE html>
 <html lang="it">
-
 <head>
-    <meta charset="UTF-8">
-    <title>Sfida Sudoku a Squadre</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-            background: #f7f9fa;
-        }
-        
-        .card {
-            background: white;
-            padding: 24px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            text-align: center;
-            max-width: 360px;
-            width: 100%;
-        }
-        
-        h2 {
-            margin: 0 0 8px 0;
-            font-size: 20px;
-            color: #1f2937;
-        }
-        
-        #team-info {
-            font-size: 15px;
-            color: #4b5563;
-            margin-bottom: 12px;
-        }
-        
-        #timer {
-            font-size: 32px;
-            font-weight: bold;
-            margin: 12px 0;
-            color: #2563eb;
-            font-variant-numeric: tabular-nums;
-        }
-        
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(4, 55px);
-            gap: 6px;
-            justify-content: center;
-            margin: 15px 0;
-        }
-        
-        .cell {
-            width: 55px;
-            height: 55px;
-            text-align: center;
-            font-size: 22px;
-            font-weight: bold;
-            border: 2px solid #cbd5e1;
-            border-radius: 8px;
-            outline: none;
-        }
-        
-        .cell:focus {
-            border-color: #2563eb;
-            background: #eff6ff;
-        }
-        
-        .fixed {
-            background: #e2e8f0;
-            color: #334155;
-            border-color: #94a3b8;
-        }
-        
-        button {
-            background: #2563eb;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 8px;
-            cursor: pointer;
-            width: 100%;
-            transition: background 0.2s;
-        }
-        
-        button:hover {
-            background: #1d4ed8;
-        }
-        
-        button:disabled {
-            background: #9ca3af;
-            cursor: not-allowed;
-        }
-        
-        #msg {
-            margin-top: 15px;
-            font-size: 15px;
-            font-weight: 600;
-        }
-    </style>
-</head>
+  <meta charset="UTF-8">
+  <title>Sfida Sudoku 9x9</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <style>
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: #f1f5f9; display: flex; flex-direction: column; align-items: center; padding: 10px; margin: 0; min-height: 100vh; }
+    .card { background: white; padding: 16px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); text-align: center; max-width: 440px; width: 100%; }
+    h2 { margin: 0 0 4px 0; font-size: 19px; color: #0f172a; }
+    #team-info { font-size: 14px; color: #64748b; margin-bottom: 6px; }
+    #timer { font-size: 26px; font-weight: 700; color: #2563eb; margin-bottom: 10px; font-variant-numeric: tabular-nums; }
+    
+    /* Griglia Sudoku 9x9 */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border: 3px solid #0f172a;
+      background: #0f172a;
+      gap: 1px;
+      margin: 0 auto 12px auto;
+    }
+    .cell {
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 600;
+      color: #1e293b;
+      cursor: pointer;
+      user-select: none;
+    }
+    /* Bordi rinforzati per i blocchi 3x3 */
+    .cell:nth-child(3n) { border-right: 2px solid #0f172a; }
+    .cell:nth-child(9n) { border-right: none; }
+    .cell:nth-child(n+19):nth-child(-n+27),
+    .cell:nth-child(n+46):nth-child(-n+54) { border-bottom: 2px solid #0f172a; }
 
+    .cell.fixed { background: #e2e8f0; color: #0f172a; font-weight: 800; cursor: default; }
+    .cell.selected { background: #bfdbfe !important; }
+    .cell.highlight { background: #eff6ff; }
+    
+    /* Tastiera numerica a video */
+    .keypad { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 12px; }
+    .key { padding: 10px 0; font-size: 18px; font-weight: bold; background: #e2e8f0; border: none; border-radius: 6px; cursor: pointer; color: #0f172a; }
+    .key:active { background: #cbd5e1; }
+    .key-del { background: #fee2e2; color: #b91c1c; }
+
+    button#submit-btn {
+      background: #2563eb; color: white; border: none; padding: 12px; font-size: 16px; font-weight: 700; border-radius: 8px; cursor: pointer; width: 100%; transition: 0.2s;
+    }
+    button#submit-btn:disabled { background: #94a3b8; cursor: not-allowed; }
+    #msg { margin-top: 10px; font-size: 14px; font-weight: 600; }
+  </style>
+</head>
 <body>
 
-    <div class="card">
-        <h2 id="player-title">Sfida di Logica</h2>
-        <div id="team-info"></div>
-        <div id="timer">00:00</div>
-        <div class="grid" id="board"></div>
-        <button id="submit-btn" onclick="checkWin()">Invia Soluzione</button>
-        <div id="msg"></div>
+  <div class="card">
+    <h2 id="player-title">Sudoku 9x9</h2>
+    <div id="team-info"></div>
+    <div id="timer">00:00</div>
+    <div class="grid" id="board"></div>
+
+    <div class="keypad">
+      <button class="key" onclick="insertDigit(1)">1</button>
+      <button class="key" onclick="insertDigit(2)">2</button>
+      <button class="key" onclick="insertDigit(3)">3</button>
+      <button class="key" onclick="insertDigit(4)">4</button>
+      <button class="key" onclick="insertDigit(5)">5</button>
+      <button class="key" onclick="insertDigit(6)">6</button>
+      <button class="key" onclick="insertDigit(7)">7</button>
+      <button class="key" onclick="insertDigit(8)">8</button>
+      <button class="key" onclick="insertDigit(9)">9</button>
+      <button class="key key-del" onclick="insertDigit('')">⌫</button>
     </div>
 
-    <script>
-        // 1. INCOLLA QUI IL TUO URL DI GOOGLE APPS SCRIPT
-        const SCRIPT_URL = "https://script.google.com/a/macros/hknpolito.org/s/AKfycbyNd2DW5ZdiAWixGEQUEjZ7Txlg3sT5IBcte5uO9rHiFoNXvOTFwqRgALGDOhnDADAuSg/exec";
+    <button id="submit-btn" onclick="checkWin()">Invia Soluzione</button>
+    <div id="msg"></div>
+  </div>
 
-        // 2. I 5 schemi di gioco (4x4 di test; per passare al 9x9 basta sostituire griglia e CSS)
-        const schemi = {
-            "1": {
-                initial: ["1", "", "", "2", "", "3", "1", "", "", "4", "3", "", "3", "", "", "4"],
-                solution: ["1", "4", "3", "2", "2", "3", "1", "4", "4", "1", "2", "3", "3", "2", "4", "1"]
-            },
-            "2": {
-                initial: ["", "2", "3", "", "3", "", "", "4", "4", "", "", "2", "", "3", "4", ""],
-                solution: ["1", "2", "3", "4", "3", "4", "1", "2", "4", "1", "2", "3", "2", "3", "4", "1"]
-            },
-            "3": {
-                initial: ["", "", "1", "2", "1", "2", "", "", "", "", "3", "4", "3", "4", "", ""],
-                solution: ["4", "3", "1", "2", "1", "2", "4", "3", "2", "1", "3", "4", "3", "4", "2", "1"]
-            },
-            "4": {
-                initial: ["2", "", "", "3", "", "1", "4", "", "", "3", "2", "", "4", "", "", "1"],
-                solution: ["2", "4", "1", "3", "3", "1", "4", "2", "1", "3", "2", "4", "4", "2", "3", "1"]
-            },
-            "5": {
-                initial: ["3", "", "", "1", "", "2", "4", "", "", "4", "1", "", "2", "", "", "3"],
-                solution: ["3", "1", "2", "4", "4", "2", "1", "3", "2", "3", "4", "1", "1", "4", "3", "2"]
-            }
-        };
+<script>
+// --- INCOLLA QUI IL TUO URL DI APPS SCRIPT ---
+const SCRIPT_URL = "INCOLLA_QUI_IL_TUO_URL_EXEC";
 
-        // 3. Lettura parametri dall'URL
-        const params = new URLSearchParams(window.location.search);
-        const idSchema = params.get("schema") || "1";
-        const nome = params.get("nome") || "Giocatore";
-        const cognome = params.get("cognome") || "";
-        const squadra = params.get("squadra") || "Nessuna";
+// 5 Schemi 9x9 autentici (0 = casella vuota)
+const schemi = {
+  "1": {
+    puzzle: "530070000600195000098000060800060003400803001700020006060000280000419005000080079",
+    sol:    "534678912672195348198342567859761423426853791713924856961537284287419635345286179"
+  },
+  "2": {
+    puzzle: "200080300060070084030500209000105408000000000402706000301007040720040060004010003",
+    sol:    "245981376169273584837564219976125438513498627482736951391657842728349165654812793"
+  },
+  "3": {
+    puzzle: "000260701680070090190004500820100040004602900050003028009300074040050036703018000",
+    sol:    "435269781682571493197834562826195347374682915951743628519326874248957136763418259"
+  },
+  "4": {
+    puzzle: "100489006730000040000001295007120600500703008006095700914600000020000037800512004",
+    sol:    "152489376739256841468371295387124659591763428246895713914637582625948137873512964"
+  },
+  "5": {
+    puzzle: "020608000580009700000040000370000500600000004008000013000020000009800036000306090",
+    sol:    "123678945584239761967145328372461589691583274458792613836924157219857436745316892"
+  }
+};
 
-        document.getElementById("player-title").innerText = `${nome} ${cognome}`;
-        document.getElementById("team-info").innerText = `Squadra: ${squadra} • Schema #${idSchema}`;
+const params = new URLSearchParams(window.location.search);
+const idSchema = params.get("schema") || "1";
+const nome = params.get("nome") || "Giocatore";
+const cognome = params.get("cognome") || "";
+const squadra = params.get("squadra") || "Nessuna";
 
-        const puzzle = schemi[idSchema] || schemi["1"];
-        const board = document.getElementById("board");
+document.getElementById("player-title").innerText = `${nome} ${cognome}`;
+document.getElementById("team-info").innerText = `Squadra: ${squadra} • Schema #${idSchema}`;
 
-        puzzle.initial.forEach((val) => {
-            const input = document.createElement("input");
-            input.maxLength = 1;
-            input.classList.add("cell");
-            if (val !== "") {
-                input.value = val;
-                input.readOnly = true;
-                input.classList.add("fixed");
-            }
-            board.appendChild(input);
-        });
+const puzzleData = schemi[idSchema] || schemi["1"];
+const board = document.getElementById("board");
+let selectedIdx = -1;
+let userValues = new Array(81).fill("");
 
-        // 4. Timer automatico
-        let seconds = 0;
-        const timerDisplay = document.getElementById("timer");
-        const interval = setInterval(() => {
-            seconds++;
-            const m = String(Math.floor(seconds / 60)).padStart(2, '0');
-            const s = String(seconds % 60).padStart(2, '0');
-            timerDisplay.innerText = `${m}:${s}`;
-        }, 1000);
+// Creazione caselle
+for (let i = 0; i < 81; i++) {
+  const cell = document.createElement("div");
+  cell.classList.add("cell");
+  const val = puzzleData.puzzle[i];
+  
+  if (val !== "0") {
+    cell.innerText = val;
+    cell.classList.add("fixed");
+    userValues[i] = val;
+  } else {
+    cell.addEventListener("click", () => selectCell(i));
+  }
+  board.appendChild(cell);
+}
 
-        // 5. Verifica e salvataggio
-        function checkWin() {
-            const inputs = Array.from(document.querySelectorAll(".cell")).map(i => i.value.trim());
-            const isCorrect = inputs.every((val, idx) => val === puzzle.solution[idx]);
+function selectCell(idx) {
+  if (puzzleData.puzzle[idx] !== "0") return;
+  selectedIdx = idx;
+  document.querySelectorAll(".cell").forEach((c, i) => {
+    c.classList.toggle("selected", i === idx);
+  });
+}
 
-            if (!isCorrect) {
-                alert("Ci sono caselle errate o incomplete. Controlla e riprova!");
-                return;
-            }
+function insertDigit(digit) {
+  if (selectedIdx === -1) return;
+  userValues[selectedIdx] = digit ? String(digit) : "";
+  const cells = document.querySelectorAll(".cell");
+  cells[selectedIdx].innerText = digit ? String(digit) : "";
+}
 
-            clearInterval(interval);
-            const btn = document.getElementById("submit-btn");
-            btn.disabled = true;
-            document.getElementById("msg").style.color = "#2563eb";
-            document.getElementById("msg").innerText = "Registrazione del tempo in corso...";
+// Supporto anche alla tastiera fisica del PC
+document.addEventListener("keydown", (e) => {
+  if (selectedIdx === -1) return;
+  if (e.key >= "1" && e.key <= "9") insertDigit(e.key);
+  if (e.key === "Backspace" || e.key === "Delete") insertDigit("");
+});
 
-            fetch(SCRIPT_URL, {
-                method: "POST",
-                mode: "no-cors",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    nome: nome,
-                    cognome: cognome,
-                    squadra: squadra,
-                    tempo: seconds
-                })
-            }).then(() => {
-                document.getElementById("msg").style.color = "#16a34a";
-                document.getElementById("msg").innerText = `Fatto! Tempo registrato: ${seconds} secondi. Puoi chiudere la pagina.`;
-            }).catch(() => {
-                document.getElementById("msg").style.color = "#dc2626";
-                document.getElementById("msg").innerText = "Errore di connessione. Fai uno screenshot di questo tempo e segnalalo.";
-            });
-        }
-    </script>
+// Timer
+let seconds = 0;
+const timerDisplay = document.getElementById("timer");
+const interval = setInterval(() => {
+  seconds++;
+  const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+  const s = String(seconds % 60).padStart(2, '0');
+  timerDisplay.innerText = `${m}:${s}`;
+}, 1000);
+
+// Verifica e invio dati
+function checkWin() {
+  const currentStr = userValues.join("");
+  if (currentStr.length < 81 || currentStr.includes("")) {
+    alert("Ci sono caselle ancora vuote!");
+    return;
+  }
+
+  if (currentStr !== puzzleData.sol) {
+    alert("Ci sono uno o più numeri errati nella griglia. Ricontrolla!");
+    return;
+  }
+
+  clearInterval(interval);
+  document.getElementById("submit-btn").disabled = true;
+  document.getElementById("msg").style.color = "#2563eb";
+  document.getElementById("msg").innerText = "Registrazione del tempo in corso...";
+
+  fetch(SCRIPT_URL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      nome: nome,
+      cognome: cognome,
+      squadra: squadra,
+      tempo: seconds
+    })
+  }).then(() => {
+    document.getElementById("msg").style.color = "#16a34a";
+    document.getElementById("msg").innerText = `Fatto! Tempo registrato: ${seconds} secondi. Puoi chiudere la finestra.`;
+  }).catch(() => {
+    document.getElementById("msg").style.color = "#dc2626";
+    document.getElementById("msg").innerText = "Errore di connessione. Fai uno screenshot del timer!";
+  });
+}
+</script>
 </body>
-
 </html>
