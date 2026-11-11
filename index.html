@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Sfida Sudoku a Squadre</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background: #f7f9fa;
+        }
+        
+        .card {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            text-align: center;
+            max-width: 360px;
+            width: 100%;
+        }
+        
+        h2 {
+            margin: 0 0 8px 0;
+            font-size: 20px;
+            color: #1f2937;
+        }
+        
+        #team-info {
+            font-size: 15px;
+            color: #4b5563;
+            margin-bottom: 12px;
+        }
+        
+        #timer {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 12px 0;
+            color: #2563eb;
+            font-variant-numeric: tabular-nums;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 55px);
+            gap: 6px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+        
+        .cell {
+            width: 55px;
+            height: 55px;
+            text-align: center;
+            font-size: 22px;
+            font-weight: bold;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            outline: none;
+        }
+        
+        .cell:focus {
+            border-color: #2563eb;
+            background: #eff6ff;
+        }
+        
+        .fixed {
+            background: #e2e8f0;
+            color: #334155;
+            border-color: #94a3b8;
+        }
+        
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.2s;
+        }
+        
+        button:hover {
+            background: #1d4ed8;
+        }
+        
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        
+        #msg {
+            margin-top: 15px;
+            font-size: 15px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="card">
+        <h2 id="player-title">Sfida di Logica</h2>
+        <div id="team-info"></div>
+        <div id="timer">00:00</div>
+        <div class="grid" id="board"></div>
+        <button id="submit-btn" onclick="checkWin()">Invia Soluzione</button>
+        <div id="msg"></div>
+    </div>
+
+    <script>
+        // 1. INCOLLA QUI IL TUO URL DI GOOGLE APPS SCRIPT
+        const SCRIPT_URL = "https://script.google.com/a/macros/hknpolito.org/s/AKfycbyNd2DW5ZdiAWixGEQUEjZ7Txlg3sT5IBcte5uO9rHiFoNXvOTFwqRgALGDOhnDADAuSg/exec";
+
+        // 2. I 5 schemi di gioco (4x4 di test; per passare al 9x9 basta sostituire griglia e CSS)
+        const schemi = {
+            "1": {
+                initial: ["1", "", "", "2", "", "3", "1", "", "", "4", "3", "", "3", "", "", "4"],
+                solution: ["1", "4", "3", "2", "2", "3", "1", "4", "4", "1", "2", "3", "3", "2", "4", "1"]
+            },
+            "2": {
+                initial: ["", "2", "3", "", "3", "", "", "4", "4", "", "", "2", "", "3", "4", ""],
+                solution: ["1", "2", "3", "4", "3", "4", "1", "2", "4", "1", "2", "3", "2", "3", "4", "1"]
+            },
+            "3": {
+                initial: ["", "", "1", "2", "1", "2", "", "", "", "", "3", "4", "3", "4", "", ""],
+                solution: ["4", "3", "1", "2", "1", "2", "4", "3", "2", "1", "3", "4", "3", "4", "2", "1"]
+            },
+            "4": {
+                initial: ["2", "", "", "3", "", "1", "4", "", "", "3", "2", "", "4", "", "", "1"],
+                solution: ["2", "4", "1", "3", "3", "1", "4", "2", "1", "3", "2", "4", "4", "2", "3", "1"]
+            },
+            "5": {
+                initial: ["3", "", "", "1", "", "2", "4", "", "", "4", "1", "", "2", "", "", "3"],
+                solution: ["3", "1", "2", "4", "4", "2", "1", "3", "2", "3", "4", "1", "1", "4", "3", "2"]
+            }
+        };
+
+        // 3. Lettura parametri dall'URL
+        const params = new URLSearchParams(window.location.search);
+        const idSchema = params.get("schema") || "1";
+        const nome = params.get("nome") || "Giocatore";
+        const cognome = params.get("cognome") || "";
+        const squadra = params.get("squadra") || "Nessuna";
+
+        document.getElementById("player-title").innerText = `${nome} ${cognome}`;
+        document.getElementById("team-info").innerText = `Squadra: ${squadra} • Schema #${idSchema}`;
+
+        const puzzle = schemi[idSchema] || schemi["1"];
+        const board = document.getElementById("board");
+
+        puzzle.initial.forEach((val) => {
+            const input = document.createElement("input");
+            input.maxLength = 1;
+            input.classList.add("cell");
+            if (val !== "") {
+                input.value = val;
+                input.readOnly = true;
+                input.classList.add("fixed");
+            }
+            board.appendChild(input);
+        });
+
+        // 4. Timer automatico
+        let seconds = 0;
+        const timerDisplay = document.getElementById("timer");
+        const interval = setInterval(() => {
+            seconds++;
+            const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+            const s = String(seconds % 60).padStart(2, '0');
+            timerDisplay.innerText = `${m}:${s}`;
+        }, 1000);
+
+        // 5. Verifica e salvataggio
+        function checkWin() {
+            const inputs = Array.from(document.querySelectorAll(".cell")).map(i => i.value.trim());
+            const isCorrect = inputs.every((val, idx) => val === puzzle.solution[idx]);
+
+            if (!isCorrect) {
+                alert("Ci sono caselle errate o incomplete. Controlla e riprova!");
+                return;
+            }
+
+            clearInterval(interval);
+            const btn = document.getElementById("submit-btn");
+            btn.disabled = true;
+            document.getElementById("msg").style.color = "#2563eb";
+            document.getElementById("msg").innerText = "Registrazione del tempo in corso...";
+
+            fetch(SCRIPT_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    nome: nome,
+                    cognome: cognome,
+                    squadra: squadra,
+                    tempo: seconds
+                })
+            }).then(() => {
+                document.getElementById("msg").style.color = "#16a34a";
+                document.getElementById("msg").innerText = `Fatto! Tempo registrato: ${seconds} secondi. Puoi chiudere la pagina.`;
+            }).catch(() => {
+                document.getElementById("msg").style.color = "#dc2626";
+                document.getElementById("msg").innerText = "Errore di connessione. Fai uno screenshot di questo tempo e segnalalo.";
+            });
+        }
+    </script>
+</body>
+
+</html>
