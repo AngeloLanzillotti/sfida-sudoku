@@ -21,18 +21,19 @@
       border: 3px solid #0f172a;
       background: #0f172a;
       gap: 1px;
-      margin: 0 auto 12px auto;
+      margin: 0 auto 10px auto;
     }
     .cell {
       background: white;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 18px;
+      font-size: 20px;
       font-weight: 600;
-      color: #1e293b;
+      color: #2563eb;
       cursor: pointer;
       user-select: none;
+      position: relative;
     }
     /* Bordi rinforzati per i blocchi 3x3 */
     .cell:nth-child(3n) { border-right: 2px solid #0f172a; }
@@ -41,13 +42,57 @@
     .cell:nth-child(n+46):nth-child(-n+54) { border-bottom: 2px solid #0f172a; }
 
     .cell.fixed { background: #e2e8f0; color: #0f172a; font-weight: 800; cursor: default; }
+    .cell.related { background: #f8fafc; }
     .cell.selected { background: #bfdbfe !important; }
-    .cell.highlight { background: #eff6ff; }
+
+    /* Mini-griglia 3x3 per le note a matita */
+    .notes-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      width: 100%;
+      height: 100%;
+      padding: 1px;
+      pointer-events: none;
+    }
+    .note-num {
+      font-size: 9px;
+      line-height: 1;
+      font-weight: 600;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Barra strumenti (Matita) */
+    .tools {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+    .tool-btn {
+      padding: 7px 16px;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 20px;
+      border: 2px solid #cbd5e1;
+      background: #f8fafc;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .tool-btn.active {
+      background: #fef3c7;
+      border-color: #f59e0b;
+      color: #b45309;
+    }
     
     /* Tastiera numerica a video */
     .keypad { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 12px; }
     .key { padding: 10px 0; font-size: 18px; font-weight: bold; background: #e2e8f0; border: none; border-radius: 6px; cursor: pointer; color: #0f172a; }
     .key:active { background: #cbd5e1; }
+    .key.pencil-mode { background: #fef3c7; color: #92400e; }
     .key-del { background: #fee2e2; color: #b91c1c; }
 
     button#submit-btn {
@@ -65,16 +110,20 @@
     <div id="timer">00:00</div>
     <div class="grid" id="board"></div>
 
-    <div class="keypad">
-      <button class="key" onclick="insertDigit(1)">1</button>
-      <button class="key" onclick="insertDigit(2)">2</button>
-      <button class="key" onclick="insertDigit(3)">3</button>
-      <button class="key" onclick="insertDigit(4)">4</button>
-      <button class="key" onclick="insertDigit(5)">5</button>
-      <button class="key" onclick="insertDigit(6)">6</button>
-      <button class="key" onclick="insertDigit(7)">7</button>
-      <button class="key" onclick="insertDigit(8)">8</button>
-      <button class="key" onclick="insertDigit(9)">9</button>
+    <div class="tools">
+      <button id="pencil-btn" class="tool-btn" onclick="togglePencil()">✏️ Matita: OFF</button>
+    </div>
+
+    <div class="keypad" id="keypad">
+      <button class="key num-key" onclick="insertDigit(1)">1</button>
+      <button class="key num-key" onclick="insertDigit(2)">2</button>
+      <button class="key num-key" onclick="insertDigit(3)">3</button>
+      <button class="key num-key" onclick="insertDigit(4)">4</button>
+      <button class="key num-key" onclick="insertDigit(5)">5</button>
+      <button class="key num-key" onclick="insertDigit(6)">6</button>
+      <button class="key num-key" onclick="insertDigit(7)">7</button>
+      <button class="key num-key" onclick="insertDigit(8)">8</button>
+      <button class="key num-key" onclick="insertDigit(9)">9</button>
       <button class="key key-del" onclick="insertDigit('')">⌫</button>
     </div>
 
@@ -83,29 +132,29 @@
   </div>
 
 <script>
-// --- INCOLLA QUI IL TUO URL DI APPS SCRIPT ---
+// --- URL DI APPS SCRIPT ---
 const SCRIPT_URL = "https://script.google.com/a/macros/hknpolito.org/s/AKfycbyNd2DW5ZdiAWixGEQUEjZ7Txlg3sT5IBcte5uO9rHiFoNXvOTFwqRgALGDOhnDADAuSg/exec";
 
-// 5 Schemi 9x9 autentici (0 = casella vuota)
+// 5 Schemi 9x9 semplificati (45 numeri dati, soluzione unica)
 const schemi = {
   "1": {
-    puzzle: "530070000600195000098000060800060003400803001700020006060000280000419005000080079",
+    puzzle: "500678900672095048000340567859060023026003701703900800900000200080010605345280079",
     sol:    "534678912672195348198342567859761423426853791713924856961537284287419635345286179"
   },
   "2": {
-    puzzle: "200080300060070084030500209000105408000000000402706000301007040720040060004010003",
+    puzzle: "000080076100073580007004010976025038010098000082700901301607840028349065604802093",
     sol:    "245981376169273584837564219976125438513498627482736951391657842728349165654812793"
   },
   "3": {
-    puzzle: "000260701680070090190004500820100040004602900050003028009300074040050036703018000",
+    puzzle: "405000081080571090097004060820100347004602905050740600000020804248957136003410250",
     sol:    "435269781682571493197834562826195347374682915951743628519326874248957136763418259"
   },
   "4": {
-    puzzle: "100489006730000040000001295007120600500703008006095700914600000020000037800512004",
+    puzzle: "100489370030250801000001295087120059000003020200800710914607500025048130800510964",
     sol:    "152489376739256841468371295387124659591763428246895713914637582625948137873512964"
   },
   "5": {
-    puzzle: "020608000580009700000040000370000500600000004008000013000020000009800036000306090",
+    puzzle: "100078905080030760967045008072461580600583200000792603006004100210800430745000802",
     sol:    "123678945584239761967145328372461589691583274458792613836924157219857436745316892"
   }
 };
@@ -122,7 +171,9 @@ document.getElementById("team-info").innerText = `Squadra: ${squadra} • Schema
 const puzzleData = schemi[idSchema] || schemi["1"];
 const board = document.getElementById("board");
 let selectedIdx = -1;
+let pencilMode = false;
 let userValues = new Array(81).fill("");
+let cellNotes = Array.from({ length: 81 }, () => new Set());
 
 // Creazione caselle
 for (let i = 0; i < 81; i++) {
@@ -140,23 +191,77 @@ for (let i = 0; i < 81; i++) {
   board.appendChild(cell);
 }
 
+function togglePencil() {
+  pencilMode = !pencilMode;
+  const btn = document.getElementById("pencil-btn");
+  btn.classList.toggle("active", pencilMode);
+  btn.innerText = pencilMode ? "✏️ Matita: ON" : "✏️ Matita: OFF";
+  document.querySelectorAll(".num-key").forEach(k => k.classList.toggle("pencil-mode", pencilMode));
+}
+
 function selectCell(idx) {
   if (puzzleData.puzzle[idx] !== "0") return;
   selectedIdx = idx;
+
+  const selRow = Math.floor(idx / 9);
+  const selCol = idx % 9;
+  const selBox = Math.floor(selRow / 3) * 3 + Math.floor(selCol / 3);
+
   document.querySelectorAll(".cell").forEach((c, i) => {
+    const r = Math.floor(i / 9);
+    const col = i % 9;
+    const box = Math.floor(r / 3) * 3 + Math.floor(col / 3);
     c.classList.toggle("selected", i === idx);
+    c.classList.toggle("related", i !== idx && !c.classList.contains("fixed") && (r === selRow || col === selCol || box === selBox));
   });
+}
+
+function renderCell(idx) {
+  const cell = document.querySelectorAll(".cell")[idx];
+  if (userValues[idx] !== "") {
+    cell.innerHTML = userValues[idx];
+  } else if (cellNotes[idx].size > 0) {
+    let html = '<div class="notes-grid">';
+    for (let n = 1; n <= 9; n++) {
+      html += `<div class="note-num">${cellNotes[idx].has(String(n)) ? n : ""}</div>`;
+    }
+    html += '</div>';
+    cell.innerHTML = html;
+  } else {
+    cell.innerHTML = "";
+  }
 }
 
 function insertDigit(digit) {
   if (selectedIdx === -1) return;
-  userValues[selectedIdx] = digit ? String(digit) : "";
-  const cells = document.querySelectorAll(".cell");
-  cells[selectedIdx].innerText = digit ? String(digit) : "";
+  const d = digit ? String(digit) : "";
+
+  if (d === "") {
+    // Cancella valore e eventuali appunti della casella
+    userValues[selectedIdx] = "";
+    cellNotes[selectedIdx].clear();
+  } else if (pencilMode) {
+    // In modalità matita: se c'era un numero definitivo lo svuota e gestisce l'appunto
+    userValues[selectedIdx] = "";
+    if (cellNotes[selectedIdx].has(d)) {
+      cellNotes[selectedIdx].delete(d);
+    } else {
+      cellNotes[selectedIdx].add(d);
+    }
+  } else {
+    // Inserimento definitivo: sovrascrive le note
+    userValues[selectedIdx] = d;
+    cellNotes[selectedIdx].clear();
+  }
+  renderCell(selectedIdx);
 }
 
-// Supporto anche alla tastiera fisica del PC
+// Supporto tastiera fisica PC (tasto M per attivare/disattivare matita)
 document.addEventListener("keydown", (e) => {
+  if (e.key.toLowerCase() === "m") {
+    togglePencil();
+    return;
+  }
   if (selectedIdx === -1) return;
   if (e.key >= "1" && e.key <= "9") insertDigit(e.key);
   if (e.key === "Backspace" || e.key === "Delete") insertDigit("");
@@ -175,7 +280,7 @@ const interval = setInterval(() => {
 // Verifica e invio dati
 function checkWin() {
   const currentStr = userValues.join("");
-  if (currentStr.length < 81 || currentStr.includes("")) {
+  if (currentStr.length < 81 || userValues.includes("")) {
     alert("Ci sono caselle ancora vuote!");
     return;
   }
